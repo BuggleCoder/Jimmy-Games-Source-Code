@@ -150,7 +150,7 @@ wss.on('connection', (ws) => {
                     break;
                 }
 
-                case 'turn':
+                case 'draw':
                     break;
 
                 case 'action':
