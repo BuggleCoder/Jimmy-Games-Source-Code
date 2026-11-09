@@ -1,2 +1,2 @@
 # War
-A game of war coded by somone
+A card game of war coded by somone
