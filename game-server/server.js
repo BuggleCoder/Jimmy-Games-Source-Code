@@ -1,4 +1,3 @@
-
 const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: 8080 });
@@ -24,23 +23,18 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message.toString());
-
             console.log(`${playerId}:`, data);
 
             switch (data.type) {
                 case 'turn':
                     break;
-
                 case 'chat':
                     break;
-
                 case 'action':
                     break;
-
                 default:
                     console.log('Unknown message type:', data.type);
             }
-
         } catch (err) {
             console.error('Invalid message:', err);
         }
@@ -58,7 +52,6 @@ wss.on('connection', (ws) => {
 
 function broadcast(data) {
     const message = JSON.stringify(data);
-
     wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(message);
@@ -82,4 +75,4 @@ setInterval(() => {
     });
 }, 1000 / TICK_RATE);
 
-console.log('WebSocket server running on ws://localhost:8080');
+console.log('Server running on port 8080');
