@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
+const deck = deckInit()
+
 const PORT = process.env.PORT || 8080;
 const MAX_MESSAGES = 100;
 const TICK_RATE = 30;
@@ -87,9 +89,7 @@ function deckInit() {
   return deck;
 }
 
-deckInit();
-
-export function draw() {}
+console.log(deck[5].value, deck[5].suit);
 
 function getPlayers() {
     return Object.values(players).map(player => ({
@@ -104,7 +104,8 @@ wss.on('connection', (ws) => {
     players[playerId] = {
         id: playerId,
         ws,
-        connected: true
+        connected: true,
+        score: 0,
     };
 
     console.log(`Player connected: ${playerId}`);
@@ -114,8 +115,6 @@ wss.on('connection', (ws) => {
         id: playerId
     }));
 
-    console.log(`Sending ${chatHistory.length} saved messages`);
-
     ws.send(JSON.stringify({
         type: 'history',
         messages: chatHistory
@@ -124,8 +123,6 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message.toString());
-
-            console.log(`${playerId}:`, data);
 
             switch (data.type) {
                 case 'chat': {
