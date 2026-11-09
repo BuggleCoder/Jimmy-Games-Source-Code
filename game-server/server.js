@@ -68,6 +68,29 @@ function broadcast(data) {
     });
 }
 
+function deckInit() {
+  const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
+  const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const deck = [];
+
+  for (const suit of suits) {
+    for (const value of values) {
+      deck.push({ value, suit });
+    }
+  }
+
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+
+  return deck;
+}
+
+deckInit();
+
+export function draw() {}
+
 function getPlayers() {
     return Object.values(players).map(player => ({
         id: player.id,
