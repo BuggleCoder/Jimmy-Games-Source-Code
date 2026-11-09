@@ -95,13 +95,13 @@ wss.on('connection', (ws) => {
 
 function broadcast(data) {
     const message = JSON.stringify(data);
+
     wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(message);
         }
     });
 }
-
 function getPlayers() {
     return Object.keys(players).map(id => ({
         id,
