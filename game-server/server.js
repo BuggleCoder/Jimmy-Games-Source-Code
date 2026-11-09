@@ -58,18 +58,21 @@ wss.on('connection', (ws) => {
             switch (data.type) {
                 case 'turn':
                 break;
-                case 'chat':
-                if (typeof data.text !== 'string') break;
-                
-                const text = data.text.trim().slice(0, 500);
-                if (!text) break;
-                
-                broadcast({
-                    type: 'chat',
-                    id: playerId,
-                    text
-                });
-                break;
+                case 'chat': {
+                    const text = data.text.trim();
+                    
+                    if (!text) break;
+                    
+                    console.log('Broadcasting:', text);
+                    
+                    broadcast({
+                        type: 'chat',
+                        id: playerId,
+                        text: text
+                    });
+                    
+                    break;
+                }
                 case 'action':
                 break;
                 default:
