@@ -38,6 +38,8 @@ function deck(numPlayers, cardsPerPlayer = null) {
   return { players, remainingDeck: deck };
 }
 
+console.log(deck(2));
+
 wss.on('connection', (ws) => {
     const playerId = Math.random().toString(36).substring(2, 9);
     players[playerId] = {deck: []};
