@@ -40,7 +40,7 @@ function deck(numPlayers, cardsPerPlayer = null) {
 
 wss.on('connection', (ws) => {
     const playerId = Math.random().toString(36).substring(2, 9);
-    players[playerId] = {deck: []};
+    players[playerId] = {};
     
     console.log(`Player connected: ${playerId}`);
 
