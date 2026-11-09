@@ -50,9 +50,7 @@ wss.on('connection', (ws) => {
         try {
             const data = JSON.parse(message);
             
-            if (data.type === 'move' && players[playerId]) {
-                players[playerId].x += data.dx;
-                players[playerId].y += data.dy;
+            if (data.type === 'turn' && players[playerId]) {
             }
         } catch (err) {
             console.error('Invalid message received:', err);
