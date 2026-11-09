@@ -11,10 +11,7 @@ const socket = new WebSocket(`${protocol}//${window.location.host}`);
 let playerId = null;
 
 function addMessage(sender, text) {
-    if (!chatContainer) {
-        console.error('chat-container element not found!');
-        return;
-    }
+    if (!chatContainer) return;
 
     const message = document.createElement('p');
 
@@ -25,18 +22,23 @@ function addMessage(sender, text) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+function loadHistory(messages) {
+    chatContainer.replaceChildren();
+
+    messages.forEach((msg) => {
+        addMessage(msg.id, msg.text);
+    });
+
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    console.log(`Loaded ${messages.length} messages`);
+}
+
 socket.onopen = () => {
     console.log('Connected to server');
-
-    socket.send(JSON.stringify({
-        type: 'chat',
-        text: 'Hello from client!'
-    }));
 };
 
 socket.onmessage = (event) => {
-    console.log('SERVER MESSAGE:', event.data);
-
     try {
         const data = JSON.parse(event.data);
 
@@ -44,6 +46,10 @@ socket.onmessage = (event) => {
             case 'init':
                 playerId = data.id;
                 console.log('My Player ID:', playerId);
+                break;
+
+            case 'history':
+                loadHistory(data.messages);
                 break;
 
             case 'chat':
@@ -55,7 +61,7 @@ socket.onmessage = (event) => {
                 break;
 
             default:
-                console.log('Unknown server message:', data);
+                console.log('Unknown message:', data);
         }
 
     } catch (error) {
@@ -71,30 +77,22 @@ socket.onerror = (error) => {
     console.error('WebSocket error:', error);
 };
 
-if (chatForm && chatFormInput) {
-    chatForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+chatForm.addEventListener('submit', (event) => {
+    event.preventDefault();
 
-        const text = chatFormInput.value.trim();
+    const text = chatFormInput.value.trim();
 
-        if (!text) return;
+    if (!text) return;
 
-        if (socket.readyState !== WebSocket.OPEN) {
-            console.error('WebSocket is not connected!');
-            return;
-        }
+    if (socket.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket is not connected!');
+        return;
+    }
 
-        socket.send(JSON.stringify({
-            type: 'chat',
-            text
-        }));
+    socket.send(JSON.stringify({
+        type: 'chat',
+        text
+    }));
 
-        chatFormInput.value = '';
-    });
-} else {
-    alert('Chat form or input not found!');
-}
-
-console.log('Chat container:', chatContainer);
-console.log('Chat form:', chatForm);
-console.log('Chat input:', chatFormInput);
+    chatFormInput.value = '';
+});
