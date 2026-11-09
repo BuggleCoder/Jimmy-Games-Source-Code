@@ -4,7 +4,7 @@ const wss = new WebSocket.Server({ port: 8080 });
 
 const players = {};
 
-function createAndDistributeDeck(numPlayers, cardsPerPlayer = null) {
+function deck(numPlayers, cardsPerPlayer = null) {
   const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
   const values = [
     "Ace", "2", "3", "4", "5", "6", "7", 
