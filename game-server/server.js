@@ -5,6 +5,7 @@ const path = require('path');
 const WebSocket = require('ws');
 
 const deck = deckInit()
+const CURRENT_CARD = 0;
 
 const PORT = process.env.PORT || 8080;
 const MAX_MESSAGES = 100;
@@ -88,8 +89,6 @@ function deckInit() {
 
   return deck;
 }
-
-console.log(deck[5].value, deck[5].suit);
 
 function getPlayers() {
     return Object.values(players).map(player => ({
