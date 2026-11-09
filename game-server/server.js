@@ -25,7 +25,6 @@ function createAndDistributeDeck(numPlayers, cardsPerPlayer = null) {
 
   const players = Array.from({ length: numPlayers }, () => []);
   
-  // Calculate max cards per player if not specified
   const maxCards = cardsPerPlayer || Math.floor(deck.length / numPlayers);
 
   for (let i = 0; i < maxCards; i++) {
@@ -38,10 +37,6 @@ function createAndDistributeDeck(numPlayers, cardsPerPlayer = null) {
 
   return { players, remainingDeck: deck };
 }
-
-const result = createAndDistributeDeck(4);
-console.log(result.players);
-
 
 wss.on('connection', (ws) => {
     const playerId = Math.random().toString(36).substring(2, 9);
