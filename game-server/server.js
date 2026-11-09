@@ -6,7 +6,7 @@ const WebSocket = require('ws');
 
 const deck = deckInit()
 const currentCard = 0;
-let game_type = "Go_Fish"
+let game_type = "War"
 
 const PORT = process.env.PORT || 8080;
 const MAX_MESSAGES = 100;
