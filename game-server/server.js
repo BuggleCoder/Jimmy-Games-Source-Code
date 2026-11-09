@@ -5,7 +5,8 @@ const path = require('path');
 const WebSocket = require('ws');
 
 const deck = deckInit()
-const CURRENT_CARD = 0;
+const currentCard = 0;
+let game_type = "Go_Fish"
 
 const PORT = process.env.PORT || 8080;
 const MAX_MESSAGES = 100;
@@ -151,6 +152,7 @@ wss.on('connection', (ws) => {
                 }
 
                 case 'draw':
+
                     break;
 
                 case 'action':
