@@ -1,2 +1,2 @@
-# Online Game
-An online game coded by someone
+# Jimmy Chats
+An online chat coded by Penn
