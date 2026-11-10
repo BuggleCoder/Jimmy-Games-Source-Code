@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret_in_production";
+const JWT_SECRET = process.env.JWT_SECRET || "asdsahdkjashdkjhjk";
 const MAX_MESSAGES = 100;
 const TICK_RATE = 30;
 
