@@ -7,15 +7,22 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1 id="heading"></h1>
+    <h1 id="heading">Join the Game</h1>
 
-    <div id="page">
+    <div id="setup-container">
+      <form id="setup-form">
+        <label for="username-input">Enter your Username:</label>
+        <input type="text" id="username-input" required autocomplete="off" />
+        <button type="submit">Join</button>
+      </form>
+    </div>
+
+    <div id="page" style="display: none">
       <form id="chat-form">
         <label>Send a message</label>
         <input type="text" id="chat-input" />
         <button type="submit">Send</button>
       </form>
-
       <div id="chat-container"></div>
     </div>
 
