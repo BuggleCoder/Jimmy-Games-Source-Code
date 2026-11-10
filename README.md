@@ -1,2 +1,2 @@
-# Jimmy Chats
-An online chat coded by Penn
+# Jimmy Games
+An online thing coded by Penn
