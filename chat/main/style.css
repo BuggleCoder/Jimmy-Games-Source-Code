@@ -11,7 +11,7 @@ body {
   margin: 20px auto;
 }
 
-input[type="text"] {
+input {
   flex: 1;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 14px;
@@ -22,7 +22,7 @@ input[type="text"] {
   transition: border-color 0.2s ease;
 }
 
-input[type="text"]:focus {
+input:focus {
   border-color: #0066cc;
 }
 

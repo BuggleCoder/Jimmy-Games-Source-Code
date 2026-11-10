@@ -2,17 +2,89 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const PORT = process.env.PORT || 8080;
+const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret_in_production";
 const MAX_MESSAGES = 100;
 const TICK_RATE = 30;
 
 const chatHistory = [];
 const players = {};
+const usersDB = {}; // Replace with a real database (e.g., PostgreSQL, MongoDB)
 
-const server = http.createServer((req, res) => {
+// Helper to parse JSON bodies in native Node http
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk.toString()));
+    req.on("end", () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (err) {
+        reject(err);
+      }
+    });
+  });
+}
+
+const server = http.createServer(async (req, res) => {
   const cleanUrl = decodeURIComponent(req.url.split("?")[0]);
 
+  // --- AUTH API ROUTES ---
+  if (req.method === "POST" && cleanUrl === "/api/register") {
+    try {
+      const { username, password } = await parseJsonBody(req);
+      if (!username || !password) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "Username and password required" }));
+      }
+
+      const cleanName = username.trim().slice(0, 25);
+      if (usersDB[cleanName.toLowerCase()]) {
+        res.writeHead(409, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "Username already taken" }));
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      usersDB[cleanName.toLowerCase()] = {
+        username: cleanName,
+        password: hashedPassword,
+        savedScore: 0,
+      };
+
+      res.writeHead(201, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: "Registered successfully" }));
+    } catch {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Invalid request body" }));
+    }
+  }
+
+  if (req.method === "POST" && cleanUrl === "/api/login") {
+    try {
+      const { username, password } = await parseJsonBody(req);
+      const user = usersDB[username?.trim().toLowerCase()];
+
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "Invalid credentials" }));
+      }
+
+      const token = jwt.sign({ username: user.username }, JWT_SECRET, {
+        expiresIn: "24h",
+      });
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ token, username: user.username }));
+    } catch {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Invalid request body" }));
+    }
+  }
+
+  // --- STATIC FILE SERVING ---
   const requestedFile =
     cleanUrl === "/" ? "index.html" : cleanUrl.replace(/^\/+/, "");
 
@@ -45,11 +117,9 @@ const server = http.createServer((req, res) => {
     }
 
     const ext = path.extname(filePath);
-
     res.writeHead(200, {
       "Content-Type": mimeTypes[ext] || "application/octet-stream",
     });
-
     res.end(content);
   });
 });
@@ -58,7 +128,6 @@ const wss = new WebSocket.Server({ server });
 
 function broadcast(data) {
   const message = JSON.stringify(data);
-
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
@@ -69,36 +138,58 @@ function broadcast(data) {
 function getPlayers() {
   return Object.values(players).map((player) => ({
     id: player.id,
-    username: player.username || "Guest",
+    username: player.username,
     connected: player.connected,
+    isGuest: player.isGuest,
   }));
 }
 
-wss.on("connection", (ws) => {
+// --- WEBSOCKET AUTHENTICATION ---
+wss.on("connection", (ws, req) => {
+  // Extract token from query string: ws://localhost:8080/?token=XYZ
+  const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
+  const token = urlParams.get("token");
+
+  let authenticatedUser = null;
+
+  if (token) {
+    try {
+      authenticatedUser = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      ws.close(4001, "Invalid or expired token");
+      return;
+    }
+  }
+
   const playerId = Math.random().toString(36).substring(2, 9);
+  const isGuest = !authenticatedUser;
+  const username = authenticatedUser ? authenticatedUser.username : `Guest_${playerId}`;
 
   players[playerId] = {
     id: playerId,
-    username: "Guest",
+    username,
     ws,
     connected: true,
-    score: 0,
+    isGuest,
+    score: authenticatedUser ? usersDB[username.toLowerCase()]?.savedScore || 0 : 0,
   };
 
-  console.log(`Player connected: ${playerId}`);
+  console.log(`Player connected: ${playerId} (${username})`);
 
   ws.send(
     JSON.stringify({
       type: "init",
       id: playerId,
-    }),
+      username,
+      isGuest,
+    })
   );
 
   ws.send(
     JSON.stringify({
       type: "history",
       messages: chatHistory,
-    }),
+    })
   );
 
   ws.on("message", (message) => {
@@ -106,33 +197,19 @@ wss.on("connection", (ws) => {
       const data = JSON.parse(message.toString());
 
       switch (data.type) {
-        case "join": {
-          if (typeof data.username === "string" && data.username.trim()) {
-            players[playerId].username = data.username.trim().slice(0, 25);
-            console.log(
-              `Player ${playerId} registered name: ${players[playerId].username}`,
-            );
-          }
-          break;
-        }
-
         case "chat": {
           if (typeof data.text !== "string") break;
-
           const text = data.text.trim().slice(0, 500);
           if (!text) break;
 
-          const currentUsername = players[playerId]?.username || "Guest";
-
           const chatMessage = {
             type: "chat",
-            id: currentUsername,
+            id: players[playerId].username,
             text,
             timestamp: Date.now(),
           };
 
           chatHistory.push(chatMessage);
-
           if (chatHistory.length > MAX_MESSAGES) {
             chatHistory.shift();
           }
@@ -157,6 +234,10 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     console.log(`Player disconnected: ${playerId}`);
+    // Optional: Save score back to usersDB before deleting
+    if (!players[playerId]?.isGuest && usersDB[username.toLowerCase()]) {
+      usersDB[username.toLowerCase()].savedScore = players[playerId].score;
+    }
     delete players[playerId];
   });
 
