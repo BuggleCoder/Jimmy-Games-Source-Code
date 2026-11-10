@@ -8,7 +8,9 @@ const setupContainer = document.getElementById("setup-container");
 const setupForm = document.getElementById("setup-form");
 const usernameInput = document.getElementById("username-input");
 
-const draw = document.getElementById('draw-btn');
+const drawBtn = document.getElementById('draw-btn');
+
+const {deck} = require('../game-server/server.js');
 
 let username = "";
 let playerId = null;
@@ -106,4 +108,8 @@ chatForm.addEventListener("submit", (event) => {
     }),
   );
   chatFormInput.value = "";
+});
+
+drawBtn.addEventListener("click", () => {
+  
 });

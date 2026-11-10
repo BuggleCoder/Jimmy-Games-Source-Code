@@ -3,6 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 
+module.exports = {deck};
+
 const deck = deckInit();
 const currentCard = 0;
 let game_type = "War";
