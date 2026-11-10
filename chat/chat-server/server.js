@@ -12,9 +12,8 @@ const TICK_RATE = 30;
 
 const chatHistory = [];
 const players = {};
-const usersDB = {}; // Replace with a real database (e.g., PostgreSQL, MongoDB)
+const usersDB = {};
 
-// Helper to parse JSON bodies in native Node http
 function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -32,7 +31,6 @@ function parseJsonBody(req) {
 const server = http.createServer(async (req, res) => {
   const cleanUrl = decodeURIComponent(req.url.split("?")[0]);
 
-  // --- AUTH API ROUTES ---
   if (req.method === "POST" && cleanUrl === "/api/register") {
     try {
       const { username, password } = await parseJsonBody(req);
@@ -84,7 +82,6 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // --- STATIC FILE SERVING ---
   const requestedFile =
     cleanUrl === "/" ? "index.html" : cleanUrl.replace(/^\/+/, "");
 
@@ -144,9 +141,7 @@ function getPlayers() {
   }));
 }
 
-// --- WEBSOCKET AUTHENTICATION ---
 wss.on("connection", (ws, req) => {
-  // Extract token from query string: ws://localhost:8080/?token=XYZ
   const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
   const token = urlParams.get("token");
 
@@ -234,7 +229,6 @@ wss.on("connection", (ws, req) => {
 
   ws.on("close", () => {
     console.log(`Player disconnected: ${playerId}`);
-    // Optional: Save score back to usersDB before deleting
     if (!players[playerId]?.isGuest && usersDB[username.toLowerCase()]) {
       usersDB[username.toLowerCase()].savedScore = players[playerId].score;
     }
