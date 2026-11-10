@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 
-module.exports = {deck};
+module.exports = {deck, currentCard};
 
 const deck = deckInit();
 const currentCard = 0;

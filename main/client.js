@@ -10,7 +10,7 @@ const usernameInput = document.getElementById("username-input");
 
 const drawBtn = document.getElementById('draw-btn');
 
-const {deck} = require('../game-server/server.js');
+const {deck, currentCard} = require('../game-server/server.js');
 
 let username = "";
 let playerId = null;
@@ -111,5 +111,6 @@ chatForm.addEventListener("submit", (event) => {
 });
 
 drawBtn.addEventListener("click", () => {
-  
+  socket.send(JSON.stringify({ type: "turn", username, deck[currentCard] }));
+  currentCard++;
 });
