@@ -7,7 +7,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = "Hey_its_me_its_verity";
 
 if (!JWT_SECRET) {
     throw new Error("JWT_SECRET environment variable is required");
