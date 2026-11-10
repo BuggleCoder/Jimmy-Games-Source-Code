@@ -3,11 +3,11 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 
-module.exports = {deck, currentCard};
-
 const deck = deckInit();
 const currentCard = 0;
 let game_type = "War";
+
+module.exports = {deck, currentCard};
 
 const PORT = process.env.PORT || 8080;
 const MAX_MESSAGES = 100;
