@@ -8,6 +8,8 @@ const setupContainer = document.getElementById("setup-container");
 const setupForm = document.getElementById("setup-form");
 const usernameInput = document.getElementById("username-input");
 
+const draw = document.getElementById('draw-btn');
+
 let username = "";
 let playerId = null;
 let socket = null;

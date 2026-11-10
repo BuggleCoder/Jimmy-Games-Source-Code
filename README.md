@@ -1,2 +1,2 @@
-# War
-A card game of war coded by somone
+# Card Games
+A card game app coded by somone
