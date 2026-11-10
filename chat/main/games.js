@@ -1,0 +1,1 @@
+import games from './games.json' with { type: 'json' };
