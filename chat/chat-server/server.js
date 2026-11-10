@@ -247,6 +247,8 @@ setInterval(() => {
   });
 }, 1000 / TICK_RATE);
 
+console.log(usersDB);
+
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`WebSocket server running on port ${PORT}`);
 });
