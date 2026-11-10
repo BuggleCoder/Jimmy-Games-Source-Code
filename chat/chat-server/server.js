@@ -248,5 +248,5 @@ setInterval(() => {
 }, 1000 / TICK_RATE);
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Game and WebSocket server running on port ${PORT}`);
+  console.log(`WebSocket server running on port ${PORT}`);
 });
