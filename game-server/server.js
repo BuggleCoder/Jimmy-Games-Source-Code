@@ -106,6 +106,7 @@ function deckInit() {
 function getPlayers() {
   return Object.values(players).map((player) => ({
     id: player.id,
+    username: player.username || "Guest",
     connected: player.connected,
   }));
 }
@@ -115,6 +116,7 @@ wss.on("connection", (ws) => {
 
   players[playerId] = {
     id: playerId,
+    username: "Guest",
     ws,
     connected: true,
     score: 0,
@@ -141,17 +143,27 @@ wss.on("connection", (ws) => {
       const data = JSON.parse(message.toString());
 
       switch (data.type) {
+        case "join": {
+          if (typeof data.username === "string" && data.username.trim()) {
+            players[playerId].username = data.username.trim().slice(0, 25);
+            console.log(
+              `Player ${playerId} registered name: ${players[playerId].username}`,
+            );
+          }
+          break;
+        }
+
         case "chat": {
           if (typeof data.text !== "string") break;
 
           const text = data.text.trim().slice(0, 500);
-
           if (!text) break;
+
+          const currentUsername = players[playerId]?.username || "Guest";
 
           const chatMessage = {
             type: "chat",
-            id: playerId,
-            username,
+            id: currentUsername,
             text,
             timestamp: Date.now(),
           };
