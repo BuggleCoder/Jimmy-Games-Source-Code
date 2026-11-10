@@ -59,7 +59,6 @@ socket.onmessage = (event) => {
         break;
 
       case "state":
-        console.log("Players:", data.players);
         break;
 
       default:
