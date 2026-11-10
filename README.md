@@ -1,2 +1,2 @@
-# Card Games
-A card game app coded by somone
+# Online Game
+An online game coded by someone

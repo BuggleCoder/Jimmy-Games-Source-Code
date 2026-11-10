@@ -8,16 +8,12 @@ const setupContainer = document.getElementById("setup-container");
 const setupForm = document.getElementById("setup-form");
 const usernameInput = document.getElementById("username-input");
 
-const drawBtn = document.getElementById('draw-btn');
-
-const {deck, currentCard} = require('../game-server/server.js');
-
 let username = "";
 let playerId = null;
 let socket = null;
 
-setupForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+setupForm.addEventListener("submit", (e) => {
+  e.preventDefault();
 
   const chosenName = usernameInput.value.trim();
   if (!chosenName) return;
@@ -108,9 +104,4 @@ chatForm.addEventListener("submit", (event) => {
     }),
   );
   chatFormInput.value = "";
-});
-
-drawBtn.addEventListener("click", () => {
-  socket.send(JSON.stringify({ type: "turn", username, deck[currentCard] }));
-  currentCard++;
 });
