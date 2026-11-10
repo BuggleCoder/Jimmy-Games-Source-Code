@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Slope",
+    "slug": "slope",
+    "url": "https://raw.githubusercontent.com/Gams-Offline/Gams/refs/heads/main/g/slope.html"
+  },
+  {
+    "name": "Stickman Hook",
+    "slug": "stickman-hook",
+    "url": "https://raw.githubusercontent.com/Gams-Offline/Gams/refs/heads/main/g/stickmanhook.html"
+  },
+  {
+    "name": "Eaglercraft",
+    "slug": "eaglercraft",
+    "url": "https://raw.githubusercontent.com/snip3rxxgames/Eaglecraft/refs/heads/main/1.5.html"
+  },
+  {
+    "name": "Spacebar Clicker",
+    "slug": "spacebar-clicker",
+    "url": "https://raw.githubusercontent.com/BuggleCoder/-Jimmy-Assets/refs/heads/main/spacebarclicker.html"
+  },
+  {
+    "name": "Paper IO 2",
+    "slug": "paper-io-2",
+    "url": "https://raw.githubusercontent.com/Gams-Offline/Gams/refs/heads/main/g/paperio2.html"
+  }
+]
