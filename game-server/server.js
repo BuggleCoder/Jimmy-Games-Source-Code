@@ -1,12 +1,11 @@
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const WebSocket = require("ws");
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const WebSocket = require('ws');
-
-const deck = deckInit()
+const deck = deckInit();
 const currentCard = 0;
-let game_type = "War"
+let game_type = "War";
 
 const PORT = process.env.PORT || 8080;
 const MAX_MESSAGES = 100;
@@ -16,65 +15,78 @@ const chatHistory = [];
 const players = {};
 
 const server = http.createServer((req, res) => {
-    const cleanUrl = decodeURIComponent(req.url.split('?')[0]);
+  const cleanUrl = decodeURIComponent(req.url.split("?")[0]);
 
-    const requestedFile = cleanUrl === '/'
-        ? 'index.html'
-        : cleanUrl.replace(/^\/+/, '');
+  const requestedFile =
+    cleanUrl === "/" ? "index.html" : cleanUrl.replace(/^\/+/, "");
 
-    const mainDir = path.resolve(__dirname, '..', 'main');
-    const filePath = path.resolve(mainDir, requestedFile);
+  const mainDir = path.resolve(__dirname, "..", "main");
+  const filePath = path.resolve(mainDir, requestedFile);
 
-    if (!filePath.startsWith(mainDir + path.sep) && filePath !== mainDir) {
-        res.writeHead(403);
-        res.end('Forbidden');
-        return;
+  if (!filePath.startsWith(mainDir + path.sep) && filePath !== mainDir) {
+    res.writeHead(403);
+    res.end("Forbidden");
+    return;
+  }
+
+  const mimeTypes = {
+    ".html": "text/html",
+    ".js": "text/javascript",
+    ".css": "text/css",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".svg": "image/svg+xml",
+    ".json": "application/json",
+  };
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      console.error("Could not find:", filePath);
+      res.writeHead(404);
+      res.end("File not found");
+      return;
     }
 
-    const mimeTypes = {
-        '.html': 'text/html',
-        '.js': 'text/javascript',
-        '.css': 'text/css',
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.svg': 'image/svg+xml',
-        '.json': 'application/json'
-    };
+    const ext = path.extname(filePath);
 
-    fs.readFile(filePath, (err, content) => {
-        if (err) {
-            console.error('Could not find:', filePath);
-            res.writeHead(404);
-            res.end('File not found');
-            return;
-        }
-
-        const ext = path.extname(filePath);
-
-        res.writeHead(200, {
-            'Content-Type': mimeTypes[ext] || 'application/octet-stream'
-        });
-
-        res.end(content);
+    res.writeHead(200, {
+      "Content-Type": mimeTypes[ext] || "application/octet-stream",
     });
+
+    res.end(content);
+  });
 });
 
 const wss = new WebSocket.Server({ server });
 
 function broadcast(data) {
-    const message = JSON.stringify(data);
+  const message = JSON.stringify(data);
 
-    wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
-        }
-    });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
 }
 
 function deckInit() {
   const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
-  const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const values = [
+    "A",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+  ];
   const deck = [];
 
   for (const suit of suits) {
@@ -92,98 +104,98 @@ function deckInit() {
 }
 
 function getPlayers() {
-    return Object.values(players).map(player => ({
-        id: player.id,
-        connected: player.connected
-    }));
+  return Object.values(players).map((player) => ({
+    id: player.id,
+    connected: player.connected,
+  }));
 }
 
-wss.on('connection', (ws) => {
-    const playerId = Math.random().toString(36).substring(2, 9);
+wss.on("connection", (ws) => {
+  const playerId = Math.random().toString(36).substring(2, 9);
 
-    players[playerId] = {
-        id: playerId,
-        ws,
-        connected: true,
-        score: 0,
-    };
+  players[playerId] = {
+    id: playerId,
+    ws,
+    connected: true,
+    score: 0,
+  };
 
-    console.log(`Player connected: ${playerId}`);
+  console.log(`Player connected: ${playerId}`);
 
-    ws.send(JSON.stringify({
-        type: 'init',
-        id: playerId
-    }));
+  ws.send(
+    JSON.stringify({
+      type: "init",
+      id: playerId,
+    }),
+  );
 
-    ws.send(JSON.stringify({
-        type: 'history',
-        messages: chatHistory
-    }));
+  ws.send(
+    JSON.stringify({
+      type: "history",
+      messages: chatHistory,
+    }),
+  );
 
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message.toString());
+  ws.on("message", (message) => {
+    try {
+      const data = JSON.parse(message.toString());
 
-            switch (data.type) {
-                case 'chat': {
-                    if (typeof data.text !== 'string') break;
+      switch (data.type) {
+        case "chat": {
+          if (typeof data.text !== "string") break;
 
-                    const text = data.text.trim().slice(0, 500);
+          const text = data.text.trim().slice(0, 500);
 
-                    if (!text) break;
+          if (!text) break;
 
-                    const chatMessage = {
-                        type: 'chat',
-                        id: playerId,
-                        text,
-                        timestamp: Date.now()
-                    };
+          const chatMessage = {
+            type: "chat",
+            id: playerId,
+            text,
+            timestamp: Date.now(),
+          };
 
-                    chatHistory.push(chatMessage);
+          chatHistory.push(chatMessage);
 
-                    if (chatHistory.length > MAX_MESSAGES) {
-                        chatHistory.shift();
-                    }
+          if (chatHistory.length > MAX_MESSAGES) {
+            chatHistory.shift();
+          }
 
-                    console.log('Broadcasting:', text);
-
-                    broadcast(chatMessage);
-                    break;
-                }
-
-                case 'draw':
-
-                    break;
-
-                case 'action':
-                    break;
-
-                default:
-                    console.log('Unknown message type:', data.type);
-            }
-
-        } catch (error) {
-            console.error('Invalid message:', error);
+          broadcast(chatMessage);
+          break;
         }
-    });
 
-    ws.on('close', () => {
-        console.log(`Player disconnected: ${playerId}`);
-        delete players[playerId];
-    });
+        case "draw":
+          break;
 
-    ws.on('error', (error) => {
-        console.error(`Player ${playerId} error:`, error);
-    });
+        case "action":
+          break;
+
+        default:
+          console.log("Unknown message type:", data.type);
+      }
+    } catch (error) {
+      console.error("Invalid message:", error);
+    }
+  });
+
+  ws.on("close", () => {
+    console.log(`Player disconnected: ${playerId}`);
+    delete players[playerId];
+  });
+
+  ws.on("error", (error) => {
+    console.error(`Player ${playerId} error:`, error);
+  });
 });
 
 setInterval(() => {
-    broadcast({
-        type: 'state',
-        players: getPlayers()
-    });
+  broadcast({
+    type: "state",
+    players: getPlayers(),
+  });
 }, 1000 / TICK_RATE);
 
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Game and WebSocket server running on port ${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Game and WebSocket server running on port ${PORT}`);
 });
