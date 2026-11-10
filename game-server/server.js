@@ -151,6 +151,7 @@ wss.on("connection", (ws) => {
           const chatMessage = {
             type: "chat",
             id: playerId,
+            username,
             text,
             timestamp: Date.now(),
           };
