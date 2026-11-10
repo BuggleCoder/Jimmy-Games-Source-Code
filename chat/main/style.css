@@ -42,3 +42,11 @@ button {
 button:hover {
   background-color: #004d99;
 }
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  color: #004d99;
+}
