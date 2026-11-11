@@ -7,16 +7,13 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = "Hey_its_me_its_verity";
-
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET environment variable is required");
-}
+const JWT_SECRET = process.env.JWT_SECRET || "jimmy-games-development-secret-change-me";
 
 const MAX_MESSAGES = 100;
 const TICK_RATE = 30;
 
 const DB_FILE = path.join(__dirname, "db.json");
+const PLAY_COUNTS_FILE = path.join(__dirname, "play-counts.json");
 const MAIN_DIR = path.resolve(__dirname, "..", "main");
 
 const chatHistory = [];
@@ -42,6 +39,52 @@ function saveUsers() {
 
     fs.writeFileSync(tempFile, JSON.stringify(usersDB, null, 2));
     fs.renameSync(tempFile, DB_FILE);
+}
+
+function loadPlayCounts() {
+    try {
+        if (!fs.existsSync(PLAY_COUNTS_FILE)) {
+            fs.writeFileSync(PLAY_COUNTS_FILE, "{}");
+        }
+
+        const data = JSON.parse(
+            fs.readFileSync(PLAY_COUNTS_FILE, "utf8")
+        );
+
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+            throw new Error("Invalid play counts database");
+        }
+
+        const counts = Object.create(null);
+
+        for (const [key, value] of Object.entries(data)) {
+            if (
+                typeof value === "number" &&
+                Number.isFinite(value) &&
+                value >= 0
+            ) {
+                counts[key] = Math.floor(value);
+            }
+        }
+
+        return counts;
+    } catch (error) {
+        console.error("Play counts loading failed:", error);
+        return Object.create(null);
+    }
+}
+
+let playCounts = loadPlayCounts();
+
+function savePlayCounts() {
+    const tempFile = PLAY_COUNTS_FILE + ".tmp";
+
+    fs.writeFileSync(
+        tempFile,
+        JSON.stringify(playCounts, null, 2)
+    );
+
+    fs.renameSync(tempFile, PLAY_COUNTS_FILE);
 }
 
 function parseJsonBody(req) {
@@ -84,7 +127,47 @@ const server = http.createServer(async (req, res) => {
     try {
         cleanUrl = decodeURIComponent(req.url.split("?")[0]);
     } catch {
-        return sendJSON(res, 400, { error: "Invalid URL" });
+        return sendJSON(res, 400, {
+            error: "Invalid URL"
+        });
+    }
+
+    if (req.method === "GET" && cleanUrl === "/api/play-count") {
+        return sendJSON(res, 200, playCounts);
+    }
+
+    if (req.method === "POST" && cleanUrl === "/api/play-count") {
+        try {
+            const { gameKey } = await parseJsonBody(req);
+
+            if (
+                typeof gameKey !== "string" ||
+                !gameKey.trim() ||
+                gameKey.length > 300
+            ) {
+                return sendJSON(res, 400, {
+                    error: "Invalid game key"
+                });
+            }
+
+            const key = gameKey.trim();
+
+            playCounts[key] = (playCounts[key] || 0) + 1;
+
+            savePlayCounts();
+
+            return sendJSON(res, 200, {
+                gameKey: key,
+                plays: playCounts[key],
+                counts: playCounts
+            });
+        } catch (error) {
+            console.error("Play count error:", error);
+
+            return sendJSON(res, 500, {
+                error: "Could not update play count"
+            });
+        }
     }
 
     if (req.method === "POST" && cleanUrl === "/api/register") {
@@ -139,7 +222,6 @@ const server = http.createServer(async (req, res) => {
             return sendJSON(res, 201, {
                 message: "Registered successfully"
             });
-
         } catch (error) {
             console.error("Registration error:", error);
 
@@ -183,7 +265,6 @@ const server = http.createServer(async (req, res) => {
                 token,
                 username: user.username
             });
-
         } catch (error) {
             console.error("Login error:", error);
 
@@ -191,6 +272,12 @@ const server = http.createServer(async (req, res) => {
                 error: "Login failed"
             });
         }
+    }
+
+    if (req.method !== "GET" && req.method !== "HEAD") {
+        return sendJSON(res, 405, {
+            error: "Method not allowed"
+        });
     }
 
     const requestedFile =
@@ -211,13 +298,22 @@ const server = http.createServer(async (req, res) => {
     const mimeTypes = {
         ".html": "text/html",
         ".js": "text/javascript",
+        ".mjs": "text/javascript",
         ".css": "text/css",
+        ".json": "application/json",
         ".png": "image/png",
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
         ".svg": "image/svg+xml",
-        ".json": "application/json",
-        ".ico": "image/x-icon"
+        ".ico": "image/x-icon",
+        ".mp3": "audio/mpeg",
+        ".wav": "audio/wav",
+        ".ogg": "audio/ogg",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+        ".ttf": "font/ttf"
     };
 
     fs.readFile(filePath, (error, content) => {
@@ -228,9 +324,13 @@ const server = http.createServer(async (req, res) => {
 
         res.writeHead(200, {
             "Content-Type":
-                mimeTypes[path.extname(filePath)] ||
+                mimeTypes[path.extname(filePath).toLowerCase()] ||
                 "application/octet-stream"
         });
+
+        if (req.method === "HEAD") {
+            return res.end();
+        }
 
         res.end(content);
     });
@@ -405,4 +505,5 @@ setInterval(() => {
 server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Loaded ${Object.keys(usersDB).length} accounts`);
+    console.log(`Loaded ${Object.keys(playCounts).length} game play counters`);
 });
